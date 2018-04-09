@@ -1,0 +1,112 @@
+group = "com.github.aalobaidi"
+version = "0.1"
+
+apply plugin: "java"
+apply plugin: "jacoco"
+apply plugin: "maven"
+apply plugin: "signing"
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+jacocoTestReport {
+    reports {
+        xml.enabled = true
+        xml.destination "${buildDir}/reports/jacoco/report.xml"
+        html.enabled = true
+        html.destination "${buildDir}/reports/jacoco/html"
+    }
+}
+
+check.dependsOn jacocoTestReport
+
+def reactorVersion = "3.1.5.RELEASE"
+def aerospikeClientVersion = "4.1.5"
+
+dependencies {
+    compile("io.projectreactor:reactor-core:$reactorVersion")
+
+    compileOnly("com.aerospike:aerospike-client:$aerospikeClientVersion")
+    compileOnly("com.google.code.findbugs:jsr305:3.0.2")
+    compileOnly("io.netty:netty-all:4.1.22.Final")
+
+    testCompile("io.projectreactor:reactor-test:$reactorVersion")
+    testCompile("io.netty:netty-all:4.1.22.Final")
+    testCompile("com.aerospike:aerospike-client:$aerospikeClientVersion")
+    testCompile("org.mockito:mockito-core:2.17.0")
+    testCompile("com.google.guava:guava:24.1-jre")
+    testCompile("junit:junit:4.12")
+}
+
+repositories {
+    jcenter()
+    mavenLocal()
+}
+
+task javadocJar(type: Jar) {
+    classifier = "javadoc"
+    from javadoc
+}
+
+task sourcesJar(type: Jar) {
+    classifier = "sources"
+    from sourceSets.main.allSource
+}
+
+artifacts {
+    archives sourcesJar
+    archives javadocJar
+}
+
+signing {
+    sign configurations.archives
+}
+signArchives.enabled = false
+
+def ossrhUsername = project.properties['ossrhUsername'] ?: ""
+def ossrhPassword = project.properties['ossrhPassword'] ?: ""
+
+uploadArchives {
+    repositories {
+        mavenDeployer {
+            beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
+
+            repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
+                authentication(userName: ossrhUsername, password: ossrhPassword)
+            }
+
+            pom.project {
+                name "Aerospike Reactor"
+                packaging "jar"
+                artifactId "aerospike-reactor"
+                description "Non-Blocking Reactive Driver for Aerospike with Reactor."
+                url "https://github.com/aalobaidi/AerospikeReactor"
+
+                scm {
+                    connection "scm:git:git@github.com:aalobaidi/AerospikeReactor.git"
+                    developerConnection "scm:git:git@github.com:aalobaidi/AerospikeReactor.git"
+                    url "https://github.com/aalobaidi/AerospikeReactor"
+                }
+
+                licenses {
+                    license {
+                        name "The Apache License, Version 2.0"
+                        url "http://www.apache.org/licenses/LICENSE-2.0.txt"
+                    }
+                }
+
+                developers {
+                    developer {
+                        id "aalobaidi"
+                        name "Ahmed Al-Obaidi"
+                        email "ahmad.alobaidy@gmail.com"
+                    }
+                }
+            }
+        }
+    }
+}

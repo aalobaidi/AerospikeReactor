@@ -1,0 +1,20 @@
+apply plugin: 'idea'
+apply plugin: 'eclipse'
+
+allprojects {
+    buildscript {
+        repositories {
+            jcenter()
+            maven { url 'https://plugins.gradle.org/m2/' }
+            mavenLocal()
+        }
+    }
+
+    group = "com.github.aalobaidi"
+    version = "0.1"
+
+    repositories {
+        mavenCentral()
+        mavenLocal()
+    }
+}
